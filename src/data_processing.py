@@ -72,12 +72,17 @@ def subsample_words(words: List[str], vocab_to_int: Dict[str, int], threshold: f
     """
     # TODO
     # Convert words to integers
-    # int_words: List[int] = None
-    word_count = Counter(words)
-    total_words = len(words)
-    freqs: Dict[str, float] = {word: count / total_words for word, count in word_count.items()}
-    probs = {word: (1-(threshold/freq) ** 0.5) for word, freq in freqs.items()}
-    train_words: List[int] = [vocab_to_int[word] for word in freqs if freqs[word] > probs[word]]
+    int_words: List[int] = [vocab_to_int[word] for word in words]
+
+    # Compute word frequencies
+    freqs: Dict[str, float] = {}
+    word_counts = Counter(words)
+    for word_i, count_i in word_counts.items():
+        freqs[word_i] = count_i / len(words)
+
+    # Compute discard probabilities
+    discard_probs = [1 - (threshold / freqs[word])**0.5 for word in freqs.keys()]
+    train_words: List[int] = [word for word in int_words if random.random() > discard_probs[word]]
 
     return train_words, freqs
 

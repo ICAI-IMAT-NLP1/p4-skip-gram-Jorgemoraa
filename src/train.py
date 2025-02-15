@@ -37,9 +37,8 @@ def train_skipgram(model: SkipGramNeg,
 
     steps = 0
     # Training loop
-    batches = get_batches(words, batch_size, window_size)
     for epoch in range(epochs):
-        for input_words, target_words in batches:
+        for input_words, target_words in get_batches(words, batch_size, window_size):
             steps += 1
             # Convert inputs and context words into tensors
             inputs, targets = torch.LongTensor(input_words), torch.LongTensor(target_words)
@@ -48,20 +47,20 @@ def train_skipgram(model: SkipGramNeg,
             # input, output, and noise vectors
             input_vectors = model.forward_input(inputs)
             output_vectors = model.forward_output(targets)
-            noise_vectors = model.forward_noise(batch_size, window_size)
+            noise_vectors = model.forward_noise(inputs.size(0), window_size)
             
             # negative sampling loss
             loss = criterion(input_vectors, output_vectors, noise_vectors)
 
             # Backward step
             optimizer.zero_grad()
-            model.backward()
+            loss.backward()
             optimizer.step()
 
             if steps % print_every == 0:
                 print(f"Epoch: {epoch+1}/{epochs}, Step: {steps}, Loss: {loss.item()}")
                 # Cosine similarity
-                valid_examples, valid_similarities = cosine_similarity(model.in_embed, device=device)
+                valid_examples, valid_similarities = cosine_similarity(model.out_embed, device=device)
                 _, closest_idxs = valid_similarities.topk(6)
 
                 valid_examples, closest_idxs = valid_examples.to('cpu'), closest_idxs.to('cpu')
